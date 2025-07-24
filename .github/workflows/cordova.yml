@@ -1,71 +1,75 @@
-name: Build Angular & Cordova Android APK
+name: Build Android Cordova App from Angular
 
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:   # enables manual trigger
+      - dev
+    paths:
+      - 'android-angular/**'
+      - '.github/workflows/**'
+
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Setup Node.js
+    - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
         node-version: 18
 
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Build Angular project
-      run: npm run build -- --prod
-
-    - name: Install Cordova CLI
+    - name: Install global Cordova CLI
       run: npm install -g cordova
 
-    - name: Setup Java JDK
+    - name: Install dependencies & build Angular
+      working-directory: android-angular
+      run: |
+        npm ci
+        npm run build  # Assumes build outputs to dist/
+
+    - name: Set up Java
       uses: actions/setup-java@v3
       with:
-        distribution: 'temurin'
-        java-version: '17'
+        distribution: temurin
+        java-version: 11
 
-    - name: Setup Gradle
+    - name: Set up Gradle
       uses: gradle/gradle-build-action@v3
 
-    - name: Setup Android SDK
+    - name: Set up Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Create Cordova project & add Android platform
+    - name: Create Cordova project
       run: |
-        cordova create timp com.thinkrms.timp TIMP
+        cordova create timp com.example.androidangular AndroidAngular
         cd timp
         cordova platform add android@13.0.0
 
-    - name: Copy Angular build to Cordova www folder
+    - name: Copy Angular build to Cordova www
       run: |
         rm -rf timp/www/*
-        cp -a dist/. timp/www/
+        cp -a android-angular/dist/. timp/www/
 
-    - name: Inject cordova.js into index.html
+    - name: Inject cordova.js
       run: |
         sed -i '/<\/body>/i <script src="cordova.js"></script>' timp/www/index.html
 
-    - name: Prepare Cordova Android platform
+    - name: Prepare Cordova
       run: |
         cd timp
         cordova prepare android
 
-    - name: Build Cordova Android APK
+    - name: Build Cordova APK
       run: |
         cd timp
         cordova build android
 
-    - name: Upload APK artifact
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: android-apk
