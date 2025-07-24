@@ -3,7 +3,7 @@ name: Build Android Cordova App from Angular
 on:
   push:
     branches:
-      - dev
+      - main
     paths:
       - 'android-angular/**'
       - '.github/workflows/**'
