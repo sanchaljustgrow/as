@@ -1,67 +1,71 @@
-name: Manual Cordova Android Build
+name: Build Angular & Cordova Android APK
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:   # enables manual trigger
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: ✅ Checkout Code
+    - name: Checkout repo
       uses: actions/checkout@v3
 
-    - name: ✅ Set up Node.js
+    - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: 18
 
-    - name: ✅ Install Cordova CLI
-      run: npm install -g cordova
-
-    - name: ✅ Install Dependencies
+    - name: Install dependencies
       run: npm ci
 
-    - name: ✅ Set up Java JDK
+    - name: Build Angular project
+      run: npm run build -- --prod
+
+    - name: Install Cordova CLI
+      run: npm install -g cordova
+
+    - name: Setup Java JDK
       uses: actions/setup-java@v3
       with:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: ✅ Set up Gradle
+    - name: Setup Gradle
       uses: gradle/gradle-build-action@v3
 
-    - name: ✅ Set up Android SDK
+    - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: 📦 Create Cordova Project
+    - name: Create Cordova project & add Android platform
       run: |
         cordova create timp com.thinkrms.timp TIMP
         cd timp
         cordova platform add android@13.0.0
 
-    - name: 📁 Copy Angular Build to Cordova WWW
+    - name: Copy Angular build to Cordova www folder
       run: |
         rm -rf timp/www/*
-        cp -a timp/dist/. timp/www/
+        cp -a dist/. timp/www/
 
-    - name: 🔌 Inject cordova.js into index.html
+    - name: Inject cordova.js into index.html
       run: |
         sed -i '/<\/body>/i <script src="cordova.js"></script>' timp/www/index.html
 
-    - name: ⚙️ Prepare Cordova Android Platform
+    - name: Prepare Cordova Android platform
       run: |
         cd timp
         cordova prepare android
 
-    - name: 🏗️ Build Cordova Android APK
+    - name: Build Cordova Android APK
       run: |
         cd timp
         cordova build android
 
-    - name: 📤 Upload APK Artifact
+    - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
         name: android-apk
