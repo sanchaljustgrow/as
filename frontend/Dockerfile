@@ -1,13 +1,19 @@
-# Stage 1 - Build Angular
+# Stage 1 - Build Angular app
 FROM node:20 AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install -g @angular/cli
+
+# Fix dependency conflicts
+RUN npm install -g @angular/cli@16
 RUN npm install --legacy-peer-deps
 
 COPY . .
-RUN npm run build -- --configuration production
+
+# Build safely
+ENV NG_CLI_ANALYTICS=false
+ENV NODE_OPTIONS=--max_old_space_size=2048
+RUN npm run build --configuration production
 
 # Stage 2 - Serve with Nginx
 FROM nginx:alpine
