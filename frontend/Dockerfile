@@ -1,26 +1,26 @@
 # Stage 1 - Build Angular App
-FROM node:20 AS build
+FROM node:16 AS build
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies using your project's package.json
+# Install dependencies
 RUN npm install --legacy-peer-deps
 
-# Copy rest of the code
+# Copy all files
 COPY . .
 
-# Build Angular app using the local CLI (no global install)
+# Build Angular app using local CLI
 RUN npx ng build --configuration production
 
-# Stage 2 - Serve using Nginx
+# Stage 2 - Serve with Nginx
 FROM nginx:alpine
 
-# Copy the compiled Angular dist output to Nginx HTML folder
-COPY --from=build /app/dist /usr/share/nginx/html
+# Copy build output to Nginx's web root
+COPY --from=build /app/dist/RestaurentApp /usr/share/nginx/html
 
-# Expose port 80
+# Expose default HTTP port
 EXPOSE 80
 
 # Run Nginx in foreground
