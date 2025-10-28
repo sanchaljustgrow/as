@@ -1,24 +1,13 @@
-# Use an official JDK image
-FROM openjdk:17-jdk-slim AS build
-
+# Build stage
+FROM maven:3.8.8-openjdk-17 AS build
 WORKDIR /app
+COPY backend/pom.xml backend/
+COPY backend/src backend/src
+RUN mvn -f backend/pom.xml clean package -DskipTests
 
-# Copy pom + sources
-COPY pom.xml mvnw ./
-COPY .mvn .mvn
-COPY src src
-
-# Build the jar
-RUN ./mvnw clean package -DskipTests
-
-# Run stage
-FROM openjdk:17-jdk-slim
+# Package stage
+FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
-
-# Copy the built jar (adjust name if different)
-COPY --from=build /app/target/*.jar app.jar
-
-# Expose port (adjust if your Spring Boot runs on different port)
+COPY --from=build /app/backend/target/*.jar app.jar
 EXPOSE 8080
-
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
