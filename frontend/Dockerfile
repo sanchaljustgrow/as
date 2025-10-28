@@ -13,7 +13,7 @@ COPY . .
 # Build safely
 ENV NG_CLI_ANALYTICS=false
 ENV NODE_OPTIONS=--max_old_space_size=2048
-RUN npm run build --configuration production
+RUN npm run build
 
 # Stage 2 - Serve with Nginx
 FROM nginx:alpine
