@@ -1,14 +1,19 @@
-# Build stage
+# ---- Stage 1: Build Angular App ----
 FROM node:20 AS build
 WORKDIR /app
-COPY frontend/package*.json frontend/
+
+# Copy package files and install dependencies
+COPY package*.json ./
 RUN npm install
-COPY frontend/ frontend/
+
+# Copy rest of the frontend code and build
+COPY . .
 RUN npm run build --prod
 
-# Serve stage
+# ---- Stage 2: Serve with Nginx ----
 FROM nginx:alpine
-COPY --from=build /app/dist/ <your-app-name>/ /usr/share/nginx/html
-# Optionally, you can configure nginx.conf for routing if you have API calls to backend
+# Copy build output from previous stage to nginx html folder
+COPY --from=build /app/dist /usr/share/nginx/html
+
 EXPOSE 80
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-g", "daemon off;"]
