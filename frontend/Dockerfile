@@ -1,19 +1,19 @@
-# ---- Stage 1: Build Angular App ----
-FROM node:20 AS build
-WORKDIR /app
 
-# Copy package files and install dependencies
+#Frontend Dockerfile
+
+# Stage 1: Build Angular App
+FROM node:18-alpine AS builder
+
+WORKDIR /app
 COPY package*.json ./
 RUN npm install
-
-# Copy rest of the frontend code and build
 COPY . .
-RUN npm run build --prod
+RUN npm install -g @angular/cli && \
+    ng build --configuration production
 
-# ---- Stage 2: Serve with Nginx ----
+# Stage 2: Serve with Nginx
 FROM nginx:alpine
-# Copy build output from previous stage to nginx html folder
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dist/ /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE 8081
 CMD ["nginx", "-g", "daemon off;"]
