@@ -1,14 +1,14 @@
 # Build stage
-FROM node:20-alpine AS build
-
-WORKDIR /usr/src/app
-COPY package*.json ./
+FROM node:20 AS build
+WORKDIR /app
+COPY frontend/package*.json frontend/
 RUN npm install
-COPY . .
-RUN npm run build -- --prod
+COPY frontend/ frontend/
+RUN npm run build --prod
 
-# Production serve stage (using nginx)
-FROM nginx:stable-alpine
-COPY --from=build /usr/src/app/dist /usr/share/nginx/html
+# Serve stage
+FROM nginx:alpine
+COPY --from=build /app/dist/ <your-app-name>/ /usr/share/nginx/html
+# Optionally, you can configure nginx.conf for routing if you have API calls to backend
 EXPOSE 80
-CMD ["nginx","-g","daemon off;"]
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
